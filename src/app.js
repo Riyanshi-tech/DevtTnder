@@ -2,7 +2,8 @@ const express = require('express');
 
 const app = express();
  app.get("/user", (req, res) => {
-  res.send({ name: "John Doe", age: 30  });
+  console.log(req.query);
+  res.send({ name: "John Doe", age: 30 });
 });
 app.post("/user", (req, res) => {
   console.log("Creating user");
