@@ -1,8 +1,8 @@
 const express = require('express');
 
 const app = express();
- app.get("/user", (req, res) => {
-  console.log(req.query);
+ app.get("/user/:userid", (req, res) => {
+  console.log(req.params);
   res.send({ name: "John Doe", age: 30 });
 });
 app.post("/user", (req, res) => {
@@ -12,7 +12,7 @@ app.post("/user", (req, res) => {
 app.use("/test", (req, res) => {
   res.send("Hello Test");
 });
-app.delete("/user", (req, res) => {
+app.delete("/user/:userid", (req, res) => {
   console.log("Deleting user");
   res.send("User deleted");
 });
