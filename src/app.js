@@ -1,6 +1,29 @@
 const express = require('express');
 
 const app = express();
+app.get("/getuserdata", (req, res) => {
+  throw new Error("Simulated server error");
+  res.send("Hello from get user data"); 
+});
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
+});
+app.use("/admin", (req, res, next) => {
+  const token = "xyzzz" ;
+  const isAdminAuthenticated = token === "xyz"; // Simulating admin authentication
+
+  if (!isAdminAuthenticated) {
+    return res.status(403).send("Forbidden: Admins only");
+  }
+  next();
+});
+app.get("/admin/getalldata", (req, res) => {
+  res.send("Hello from admin get all data");
+});
+app.get("/admin/secretinfo", (req, res) => {
+  res.send("Hello from admin secret info");
+});
  app.use(
    "/user",
    (req, res, next) => {
