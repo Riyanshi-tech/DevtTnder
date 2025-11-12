@@ -2,11 +2,12 @@ const express = require('express');
 const connectDB=require('./config/database'); // Ensure database connection is established
 const app = express();
 const User = require('./models/user'); // Import the User model
+app.use(express.json()); // Middleware to parse JSON bodies
 app.post("/signup", async (req, res) => {
   const user = new User({
-    firstName: "Riyanshi",
-    lastName: "Chaudhary",
-    email: "riyanshi@example.com"
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    email: req.body.email
   });
   try {
     await user.save();
