@@ -17,6 +17,26 @@ app.post("/signup", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+app.get("/user", async (req, res) => {
+  const userEmail = req.body.emailId;
+  try {
+    const users = await User.findOne({emailId: userEmail});
+    res.send(users);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+app.get("/feed", async (req, res) => {
+  try {
+    const users = await User.find();  
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
 connectDB()
   .then(() => {
     console.log("Database connected successfully");
