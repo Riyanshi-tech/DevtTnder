@@ -7,7 +7,7 @@ app.post("/signup", async (req, res) => {
   const user = new User({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
-    email: req.body.email
+    emailId: req.body.email
   });
   try {
     await user.save();
@@ -19,15 +19,39 @@ app.post("/signup", async (req, res) => {
 });
 app.get("/user", async (req, res) => {
   const userEmail = req.body.emailId;
+  console.log(userEmail);
+
   try {
     const users = await User.findOne({emailId: userEmail});
-    res.send(users);
+    console.log(users);
+    // res.send(users);
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).send("Internal Server Error");
   }
 });
+app.delete("/user", async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    await User.findByIdAndDelete(userId);
+    res.status(200).send("User deleted successfully");
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+app.patch("/user", async (req, res) => {
+  const userId = req.body.userId;
+  const updatedData = req.body;
+  try {
+    await User.findByIdAndUpdate({_id :userId}, updatedData);
+    res.status(200).send("User updated successfully");
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).send("Internal Server Error"); 
+  }
+}); 
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find();  
