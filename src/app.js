@@ -7,7 +7,8 @@ app.post("/signup", async (req, res) => {
   const user = new User({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
-    emailId: req.body.email
+    emailId: req.body.emailId,
+   
   });
   try {
     await user.save();
@@ -45,7 +46,11 @@ app.patch("/user", async (req, res) => {
   const userId = req.body.userId;
   const updatedData = req.body;
   try {
-    await User.findByIdAndUpdate({_id :userId}, updatedData);
+     const user = await User.findByIdAndUpdate({_id :userId}, updatedData, {
+       returnDocument: true,
+       runValidators: true
+     });
+
     res.status(200).send("User updated successfully");
   } catch (error) {
     console.error("Error updating user:", error);
