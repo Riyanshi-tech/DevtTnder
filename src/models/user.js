@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
-  emailId: { type: String, required: true, unique: true },
+  emailId: { type: String, required: true, unique: true},
   password: { type: String, required: false },
   age: { type: Number, min: 18, max: 100 },
 
@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema({
   photo: { type: String, required: false },
   about: { type: String, required: false },
   skills: { type: [String], required: false },
+  
 });
 
 const User = mongoose.model('Users', userSchema);
