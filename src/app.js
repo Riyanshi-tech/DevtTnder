@@ -13,6 +13,9 @@ app.post("/signup", async (req, res) => {
      firstName: req.body.firstName,
      lastName: req.body.lastName,
      emailId: req.body.emailId,
+     gender: req.body.gender,
+     age: req.body.age,
+     password: req.body.password,
    });
     await user.save();
     res.status(201).send("User registered successfully");
@@ -46,9 +49,19 @@ app.delete("/user", async (req, res) => {
 
 // UPDATE USER
 app.patch("/user", async (req, res) => {
+
   try {
+      const userId = req.body.userId;
+      const data = req.body;
+      const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age"];
+      const isUpdateAllowed = Object.keys(data).every((k) =>
+        ALLOWED_UPDATES.includes(k)
+      );
+      if (!isUpdateAllowed) {
+        throw new Error("update not allowed");
+      }
     await User.findByIdAndUpdate(req.body.userId, req.body, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
     res.send("User updated successfully");
