@@ -5,8 +5,7 @@ const User = require("./models/user");
 
 const app = express();
 app.use(express.json());
-
-// SIGNUP
+// SIGNUP USER
 app.post("/signup", async (req, res) => {
   try {
    const user = new User({
