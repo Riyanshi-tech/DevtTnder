@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
   lastName: { type: String, required: true ,minlength:4, maxlength:20 },
   emailId: { type: String, required: true, unique: true,trim: true },
   password: { type: String, required: false },
-  age: { type: Number, min: 18, max: 100 },
+  age: { type: Number, min: 18 },
 
   gender: {
     type: String,
