@@ -77,6 +77,7 @@ console.log("ALLOWED_UPDATES:", ALLOWED_UPDATES);
     );
 
     if (!isUpdateAllowed) throw new Error("update not allowed");
+    if(updates.skills.length>10) throw new Error("Too many skills added");
 
     await User.findByIdAndUpdate(userId, updates, {
       new: true,
