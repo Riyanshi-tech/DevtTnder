@@ -22,8 +22,14 @@ app.post("/signup", async (req, res) => {
     res.status(201).send("User registered successfully");
   } catch (error) {
     console.error(error.message);
+
+    if (error.name === "ValidationError") {
+      return res.status(400).send(error.message); // <-- proper response
+    }
+
     res.status(500).send("Internal Server Error");
   }
+
 });
 
 // GET ONE USER
@@ -77,8 +83,9 @@ console.log("ALLOWED_UPDATES:", ALLOWED_UPDATES);
     );
 
     if (!isUpdateAllowed) throw new Error("update not allowed");
-    if(updates.skills.length>10) throw new Error("Too many skills added");
-
+   if (updates.skills && updates.skills.length > 10) {
+     return res.status(400).send("Too many skills added (max 10)");
+   }
     await User.findByIdAndUpdate(userId, updates, {
       new: true,
       runValidators: true,
