@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      
       validate(value) {
         if (!validator.isEmail(value)) {
           throw new Error("Invalid email format");
@@ -19,23 +18,35 @@ const userSchema = new mongoose.Schema(
       },
     },
 
-    password: { type: String, required: true, minlength: 6,validator(value) {
-        if (!validator.isStrongPassword(value)  ) {
-          throw new Error("Password cannot contain 'password'");
-            }}},
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+      validate(value) {
+        if (!validator.isStrongPassword(value, { minSymbols: 0 })) {
+          throw new Error(
+            "Password must be strong (uppercase, lowercase, number)"
+          );
+        }
+        if (value.toLowerCase().includes("password")) {
+          throw new Error("Password cannot contain the word 'password'");
+        }
+      },
+    },
 
     age: { type: Number, min: 18 },
 
     gender: {
       type: String,
       validate(value) {
-        if (!["male", "female", "other"].includes(value)) {
+        if (!["male", "female", "other"].includes(value.toLowerCase())) {
           throw new Error("Invalid gender value");
         }
       },
     },
 
-    photoUrl: { type: String,
+    photoUrl: {
+      type: String,
       validate(value) {
         if (value && !validator.isURL(value)) {
           throw new Error("Invalid URL format for photoUrl");
@@ -43,7 +54,7 @@ const userSchema = new mongoose.Schema(
       },
     },
 
-    about: { type: String, minlength: 0, maxlength: 200 },
+    about: { type: String, maxlength: 200 },
 
     skills: {
       type: [String],
@@ -53,8 +64,6 @@ const userSchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
-
 );
 
-const User = mongoose.model("User", userSchema);
-module.exports = User;
+module.exports = mongoose.model("User", userSchema);

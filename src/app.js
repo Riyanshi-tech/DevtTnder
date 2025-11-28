@@ -1,7 +1,8 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const connectDB = require("./config/database");
 const User = require("./models/user");
+const { validateSignUpData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 const app = express();
 app.use(express.json());
@@ -9,27 +10,24 @@ app.use(express.json());
 // SIGNUP USER
 app.post("/signup", async (req, res) => {
   try {
-    const user = new User({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      emailId: req.body.emailId,
-      gender: req.body.gender,
-      age: req.body.age,
-      password: req.body.password,
-    });
+    validateSignUpData(req);
+    const { password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    req.body.password = hashedPassword;
 
+    const user = new User(req.body);
     await user.save();
+
     res.status(201).send("User registered successfully");
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
 
-    if (error.name === "ValidationError") {
-      return res.status(400).send(error.message); // <-- proper response
+    if (error.code === 11000) {
+      return res.status(400).send("Email already registered");
     }
 
-    res.status(500).send("Internal Server Error");
+    return res.status(400).send(error.message);
   }
-
 });
 
 // GET ONE USER
@@ -37,9 +35,8 @@ app.get("/user", async (req, res) => {
   try {
     const user = await User.findOne({ emailId: req.query.emailId });
     if (!user) return res.status(404).send("User not found");
-    res.status(200).json(user);
+    res.json(user);
   } catch (error) {
-    console.error(error.message);
     res.status(500).send("Internal Server Error");
   }
 });
@@ -47,12 +44,11 @@ app.get("/user", async (req, res) => {
 // DELETE USER
 app.delete("/user", async (req, res) => {
   try {
-    if (!req.body.userId) return res.status(400).send("UserId is required");
+    if (!req.body.userId) return res.status(400).send("UserId required");
 
     await User.findByIdAndDelete(req.body.userId);
     res.send("User deleted successfully");
   } catch (error) {
-    console.error(error.message);
     res.status(500).send("Internal Server Error");
   }
 });
@@ -61,31 +57,26 @@ app.delete("/user", async (req, res) => {
 app.patch("/user", async (req, res) => {
   try {
     const { userId, ...updates } = req.body;
-        
-
-
     if (!userId) return res.status(400).send("UserId required");
-const ALLOWED_UPDATES = [
-  "firstName",
-  "lastName",
-  "photoUrl",
-  "about",
-  "gender",
-  "age",
-  "skills",
-  "emailId",
-];
-console.log("ALLOWED_UPDATES:", ALLOWED_UPDATES);
-        console.log("UPDATES RECEIVED:", Object.keys(updates));
 
-    const isUpdateAllowed = Object.keys(updates).every((k) =>
-      ALLOWED_UPDATES.includes(k)
-    );
+    const ALLOWED = [
+      "firstName",
+      "lastName",
+      "photoUrl",
+      "about",
+      "gender",
+      "age",
+      "skills",
+      "emailId",
+    ];
 
-    if (!isUpdateAllowed) throw new Error("update not allowed");
-   if (updates.skills && updates.skills.length > 10) {
-     return res.status(400).send("Too many skills added (max 10)");
-   }
+    const allowed = Object.keys(updates).every((k) => ALLOWED.includes(k));
+    if (!allowed) return res.status(400).send("update not allowed");
+
+    if (updates.skills && updates.skills.length > 10) {
+      return res.status(400).send("Too many skills (max 10)");
+    }
+
     await User.findByIdAndUpdate(userId, updates, {
       new: true,
       runValidators: true,
@@ -93,24 +84,17 @@ console.log("ALLOWED_UPDATES:", ALLOWED_UPDATES);
 
     res.send("User updated successfully");
   } catch (error) {
-    console.error(error.message);
-
-    res.status(500).send("Internal Server Error");
+    res.status(400).send(error.message);
   }
 });
 
 // GET ALL USERS
 app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).send("Internal Server Error");
-  }
+  const users = await User.find();
+  res.json(users);
 });
 
-// CONNECT DB + START SERVER
+// START SERVER
 connectDB().then(() => {
   console.log("Database connected");
   app.listen(3000, () => console.log("Server running on port 3000"));
