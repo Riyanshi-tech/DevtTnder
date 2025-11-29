@@ -3,9 +3,13 @@ const connectDB = require("./config/database");
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
-
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const app = express();
+const { userAuth } = require("./middlewares/auth");
 app.use(express.json());
+app.use(cookieParser());
+
 
 // SIGNUP USER
 app.post("/signup", async (req, res) => {
@@ -29,7 +33,46 @@ app.post("/signup", async (req, res) => {
     return res.status(400).send(error.message);
   }
 });
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(400).send("Invalid email or password");
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).send("Invalid email or password");
+    }
+    const token = jwt.sign({ userId: user._id }, "Dev@Tinder$790", { expiresIn: "1h" });
+    console.log(token);
+    res.cookie("token", token, { httpOnly: true });
+    res.send("Login successful");
+  } catch (error) {
+    res.status(500).send("Internal Server Error");
+  }
+});
+app.get("/profile", userAuth, async (req, res) => {
 
+ try{const cookie = req.cookies;
+  const {token} = cookie;
+  if(!token){
+   return res.status(401).send("Unauthorized");
+  }
+  const decodedMessage = jwt.verify(token, "Dev@Tinder$790");
+  console.log(decodedMessage);
+  const {userId} = decodedMessage;
+  console.log("logged in user is "+ userId);
+  const user = await User.findById(userId );
+  if(!user){
+   return res.status(404).send("User not found");
+  }  
+  console.log(cookie);
+  res.send(user);
+ }catch(error){
+  res.status(401).send("Unauthorized");
+ }
+});
 // GET ONE USER
 app.get("/user", async (req, res) => {
   try {
