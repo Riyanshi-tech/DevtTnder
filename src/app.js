@@ -36,106 +36,104 @@ app.post("/signup", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
+
+    // 1. Find user
     const user = await User.findOne({ emailId });
     if (!user) {
       return res.status(400).send("Invalid email or password");
     }
-    const isMatch = await bcrypt.compare(password, user.password);
+
+    // 2. Validate password using model method
+    const isMatch = await user.validatePassword(password);
     if (!isMatch) {
       return res.status(400).send("Invalid email or password");
     }
-    const token = jwt.sign({ userId: user._id }, "Dev@Tinder$790", { expiresIn: "1h" });
-    console.log(token);
-    res.cookie("token", token, { httpOnly: true });
-    res.send("Login successful");
-  } catch (error) {
-    res.status(500).send("Internal Server Error");
-  }
-});
-app.get("/profile", userAuth, async (req, res) => {
 
- try{const cookie = req.cookies;
-  const {token} = cookie;
-  if(!token){
-   return res.status(401).send("Unauthorized");
-  }
-  const decodedMessage = jwt.verify(token, "Dev@Tinder$790");
-  console.log(decodedMessage);
-  const {userId} = decodedMessage;
-  console.log("logged in user is "+ userId);
-  const user = await User.findById(userId );
-  if(!user){
-   return res.status(404).send("User not found");
-  }  
-  console.log(cookie);
-  res.send(user);
- }catch(error){
-  res.status(401).send("Unauthorized");
- }
-});
-// GET ONE USER
-app.get("/user", async (req, res) => {
-  try {
-    const user = await User.findOne({ emailId: req.query.emailId });
-    if (!user) return res.status(404).send("User not found");
-    res.json(user);
-  } catch (error) {
-    res.status(500).send("Internal Server Error");
-  }
-});
+    // 3. Generate JWT
+    const token = user.getJWT();
 
-// DELETE USER
-app.delete("/user", async (req, res) => {
-  try {
-    if (!req.body.userId) return res.status(400).send("UserId required");
-
-    await User.findByIdAndDelete(req.body.userId);
-    res.send("User deleted successfully");
-  } catch (error) {
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-// UPDATE USER
-app.patch("/user", async (req, res) => {
-  try {
-    const { userId, ...updates } = req.body;
-    if (!userId) return res.status(400).send("UserId required");
-
-    const ALLOWED = [
-      "firstName",
-      "lastName",
-      "photoUrl",
-      "about",
-      "gender",
-      "age",
-      "skills",
-      "emailId",
-    ];
-
-    const allowed = Object.keys(updates).every((k) => ALLOWED.includes(k));
-    if (!allowed) return res.status(400).send("update not allowed");
-
-    if (updates.skills && updates.skills.length > 10) {
-      return res.status(400).send("Too many skills (max 10)");
-    }
-
-    await User.findByIdAndUpdate(userId, updates, {
-      new: true,
-      runValidators: true,
+    // 4. Set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      // secure: true,   // enable when using https
+      // sameSite: "strict",
     });
 
-    res.send("User updated successfully");
+    res.send("Login successful");
   } catch (error) {
-    res.status(400).send(error.message);
+    console.error(error);
+    res.status(500).send("Internal Server Error");
   }
 });
 
-// GET ALL USERS
-app.get("/feed", async (req, res) => {
-  const users = await User.find();
-  res.json(users);
+app.post("/SendConnectionRequest",userAuth,async(req,res)=>{
+  const user = req.user;
+  console.log("sending connection request");
+  res.send(user.firstName + " " + user.lastName +" "+ "request sent");
 });
+// // GET ONE USER
+// app.get("/user", async (req, res) => {
+//   try {
+//     const user = await User.findOne({ emailId: req.query.emailId });
+//     if (!user) return res.status(404).send("User not found");
+//     res.json(user);
+//   } catch (error) {
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
+
+// // DELETE USER
+// app.delete("/user", async (req, res) => {
+//   try {
+//     if (!req.body.userId) return res.status(400).send("UserId required");
+
+//     await User.findByIdAndDelete(req.body.userId);
+//     res.send("User deleted successfully");
+//   } catch (error) {
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
+
+// // UPDATE USER
+// app.patch("/user", async (req, res) => {
+//   try {
+//     const { userId, ...updates } = req.body;
+//     if (!userId) return res.status(400).send("UserId required");
+
+//     const ALLOWED = [
+//       "firstName",
+//       "lastName",
+//       "photoUrl",
+//       "about",
+//       "gender",
+//       "age",
+//       "skills",
+//       "emailId",
+//     ];
+
+//     const allowed = Object.keys(updates).every((k) => ALLOWED.includes(k));
+//     if (!allowed) return res.status(400).send("update not allowed");
+
+//     if (updates.skills && updates.skills.length > 10) {
+//       return res.status(400).send("Too many skills (max 10)");
+//     }
+
+//     await User.findByIdAndUpdate(userId, updates, {
+//       new: true,
+//       runValidators: true,
+//     });
+
+//     res.send("User updated successfully");
+//   } catch (error) {
+//     res.status(400).send(error.message);
+//   }
+// });
+
+// // GET ALL USERS
+// app.get("/feed", async (req, res) => {
+//   const users = await User.find();
+//   res.json(users);
+// });
 
 // START SERVER
 connectDB().then(() => {

@@ -8,6 +8,7 @@ const user = await User.findById(userId);
 if(!user){
  return res.status(404).send("User not found"); 
 }
+req.user = user;
 next();
 }catch(error){
  res.status(401).send("Unauthorized");}

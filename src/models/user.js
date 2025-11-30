@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
@@ -65,5 +67,25 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// 🔐 Hash password before saving
+userSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+  next();
+});
+
+// 🔑 Generate JWT
+userSchema.methods.getJWT = function () {
+  return jwt.sign({ userId: this._id }, "Dev@Tinder$790", {
+    expiresIn: "1d",
+  });
+};
+
+// 🔍 Validate password
+userSchema.methods.validatePassword = function (password) {
+  return bcrypt.compare(password, this.password);
+};
 
 module.exports = mongoose.model("User", userSchema);
