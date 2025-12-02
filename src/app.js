@@ -1,77 +1,18 @@
 const express = require("express");
 const connectDB = require("./config/database");
-const User = require("./models/user");
-const { validateSignUpData } = require("./utils/validation");
-const bcrypt = require("bcrypt");
+
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const app = express();
-const { userAuth } = require("./middlewares/auth");
+
 app.use(express.json());
 app.use(cookieParser());
-
-
-// SIGNUP USER
-app.post("/signup", async (req, res) => {
-  try {
-    validateSignUpData(req);
-    const { password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    req.body.password = hashedPassword;
-
-    const user = new User(req.body);
-    await user.save();
-
-    res.status(201).send("User registered successfully");
-  } catch (error) {
-    console.error(error);
-
-    if (error.code === 11000) {
-      return res.status(400).send("Email already registered");
-    }
-
-    return res.status(400).send(error.message);
-  }
-});
-app.post("/login", async (req, res) => {
-  try {
-    const { emailId, password } = req.body;
-
-    // 1. Find user
-    const user = await User.findOne({ emailId });
-    if (!user) {
-      return res.status(400).send("Invalid email or password");
-    }
-
-    // 2. Validate password using model method
-    const isMatch = await user.validatePassword(password);
-    if (!isMatch) {
-      return res.status(400).send("Invalid email or password");
-    }
-
-    // 3. Generate JWT
-    const token = user.getJWT();
-
-    // 4. Set cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      // secure: true,   // enable when using https
-      // sameSite: "strict",
-    });
-
-    res.send("Login successful");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-app.post("/SendConnectionRequest",userAuth,async(req,res)=>{
-  const user = req.user;
-  console.log("sending connection request");
-  res.send(user.firstName + " " + user.lastName +" "+ "request sent");
-});
-// // GET ONE USER
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");  
+app.use("/auth", authRouter);
+app.use("/user", profileRouter);
+app.use("/request", requestRouter);
 // app.get("/user", async (req, res) => {
 //   try {
 //     const user = await User.findOne({ emailId: req.query.emailId });
