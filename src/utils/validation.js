@@ -24,7 +24,7 @@ function validateSignUpData(req) {
     throw new Error("Gender must be male, female, or other");
   }
 
-  if (!validator.isInt(age.toString(), { min: 18, max: 100 })) {
+  if (age && !validator.isInt(age.toString(), { min: 18, max: 100 })) {
     throw new Error("Age must be between 18 and 100");
   }
 
