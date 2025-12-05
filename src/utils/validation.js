@@ -33,6 +33,33 @@ function validateSignUpData(req) {
   }
 
   return true;
-}
+};
+const validateEditProfileData = (req) => {
+  if (!req.body || Object.keys(req.body).length === 0) {
+    throw new Error("Request body is empty");
+  }
 
-module.exports = { validateSignUpData };
+  const allowedMethods = [
+    "firstName",
+    "lastName",
+    "photoUrl",
+    "about",
+    "gender", 
+    "age",
+    "skills",
+    "emailId",
+  ];
+
+  const isEditAllowed = Object.keys(req.body).every((key) =>
+    allowedMethods.includes(key)
+  );
+
+  if (!isEditAllowed) {
+    throw new Error("Invalid fields in profile edit");
+  }
+
+  return true;
+};
+
+
+module.exports = { validateSignUpData, validateEditProfileData };
