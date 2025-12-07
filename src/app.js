@@ -13,8 +13,8 @@ const requestRouter = require("./routes/request");
 app.use("/auth", authRouter);
 app.use("/user", profileRouter);
 app.use("/request", requestRouter);
-// app.get("/user", async (req, res) => {
-//   try {
+
+
 //     const user = await User.findOne({ emailId: req.query.emailId });
 //     if (!user) return res.status(404).send("User not found");
 //     res.json(user);
