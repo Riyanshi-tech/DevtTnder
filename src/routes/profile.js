@@ -11,18 +11,14 @@ profileRouter.get("/profile/view",userAuth,async(req,res)=>{
 profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   try {
     // Validate body before doing anything
-    validateEditProfileData(req);
-
+    validateEditProfileData(req.body);
     const user = req.user;
     const updates = req.body;
-
     // Update user object
     Object.keys(updates).forEach((key) => {
       user[key] = updates[key];
     });
-
     await user.save();
-
     res.status(200).send({
       message: "Profile updated successfully",
       user,

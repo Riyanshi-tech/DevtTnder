@@ -32,10 +32,10 @@ function validateSignUpData(req) {
     throw new Error("Password must be at least 6 characters long");
   }
 
-  return true;
+  return true
 };
-const validateEditProfileData = (req) => {
-  if (!req.body || Object.keys(req.body).length === 0) {
+const validateEditProfileData = (data) => {
+  if (!data || Object.keys(data).length === 0) {
     throw new Error("Request body is empty");
   }
 
@@ -44,13 +44,13 @@ const validateEditProfileData = (req) => {
     "lastName",
     "photoUrl",
     "about",
-    "gender", 
+    "gender",
     "age",
     "skills",
     "emailId",
   ];
 
-  const isEditAllowed = Object.keys(req.body).every((key) =>
+  const isEditAllowed = Object.keys(data).every((key) =>
     allowedMethods.includes(key)
   );
 
@@ -60,6 +60,7 @@ const validateEditProfileData = (req) => {
 
   return true;
 };
+
 
 
 module.exports = { validateSignUpData, validateEditProfileData };
