@@ -23,13 +23,24 @@ const connectionRequestSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-connectionRequestSchema.pre("save", function (next) {
-  const connectionRequest = this;
-  if(connectionRequest.fromUserId.equals(connectionRequest.toUserId)){
-    throw new Error("fromUserId and toUserId cannot be the same");
+connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 }, { unique: true });
+connectionRequestSchema.pre("save", async function (next) {
+  if (this.fromUserId.equals(this.toUserId)) {
+    return next(new Error("fromUserId and toUserId cannot be the same"));
   }
+
+  const exists = await mongoose.model("ConnectionRequest").findOne({
+    fromUserId: this.fromUserId,
+    toUserId: this.toUserId,
+  });
+
+  if (exists) {
+    return next(new Error("Request already sent!"));
+  }
+
   next();
 });
+
 
 const ConnectionRequest = mongoose.model(
   "ConnectionRequest",
