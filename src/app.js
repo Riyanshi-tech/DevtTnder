@@ -9,10 +9,15 @@ app.use(express.json());
 app.use(cookieParser());
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
-const requestRouter = require("./routes/request");  
+const requestRouter = require("./routes/request"); 
+const userRouter = require("./routes/user"); 
 app.use("/auth", authRouter);
 app.use("/user", profileRouter);
 app.use("/request", requestRouter);
+app.use("/users", userRouter);
+app.get("/", (req, res) => {
+  res.send("Welcome to the User Management API");
+});
 connectDB().then(() => {
   console.log("Database connected");
   app.listen(3000, () => console.log("Server running on port 3000"));

@@ -16,13 +16,17 @@ authRouter.post("/login", async (req, res) => {
     // 1. Find user
     const user = await User.findOne({ emailId });
     if (!user) {
-      return res.status(400).send("Invalid email or password");
+      return res.status(400).send("Invalid email ");
     }
-
-    // 2. Validate password using model method
-    const isMatch = await user.validatePassword(password);
-    if (!isMatch) {
-      return res.status(400).send("Invalid email or password");
+    const bodypassword = await bcrypt.compare(password, user.password);
+    console.log(bodypassword);
+    console.log(password);
+    console.log(user.password);
+    
+    
+    
+    if (!bodypassword) {
+      return res.status(400).send("Invalid  password");
     }
 
     // 3. Generate JWT

@@ -74,7 +74,12 @@ requestRouter.post(
   if(!allowedStatus.includes(status)){
     return res.status(400).send("Invalid status value");
   }
+  console.log(requestId);
+  console.log(loggedInUserId);
+  
+  
   const connectionRequest = await ConnectionRequest.findOne({_id:requestId,toUserId:loggedInUserId});
+  
   if(!connectionRequest){
     return res.status(404).send("Connection request not found");
   }
