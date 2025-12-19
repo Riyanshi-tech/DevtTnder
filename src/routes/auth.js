@@ -1,10 +1,41 @@
 const express = require("express");
 const User = require("../models/user");
 const { validateSignUpData } = require("../utils/validation");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
+
 const authRouter = express.Router();
 
-// ---------------------- LOGIN ----------------------
+/* ---------------- SIGNUP ---------------- */
+authRouter.post("/signup", async (req, res) => {
+  try {
+    validateSignUpData(req);
+
+    const { password } = req.body;
+
+    // Validate password BEFORE hashing
+    if (!validator.isStrongPassword(password, { minSymbols: 0 })) {
+      return res.status(400).send("Weak password");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      ...req.body,
+      password: hashedPassword,
+    });
+
+    await user.save();
+
+    res.status(201).send("User registered successfully");
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).send("Email already registered");
+    }
+    res.status(400).send(error.message);
+  }
+});
+
+/* ---------------- LOGIN ---------------- */
 authRouter.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
@@ -12,77 +43,37 @@ authRouter.post("/login", async (req, res) => {
     if (!emailId || !password) {
       return res.status(400).send("Email and password are required");
     }
+    emailId = emailId.toLowerCase();
 
-    // 1. Find user
-    const user = await User.findOne({ emailId });
+    const user = await User.findOne({ emailId: emailId.toLowerCase() });
     if (!user) {
-      return res.status(400).send("Invalid email ");
-    }
-    const bodypassword = await bcrypt.compare(password, user.password);
-    console.log(bodypassword);
-    console.log(password);
-    console.log(user.password);
-    
-    
-    
-    if (!bodypassword) {
-      return res.status(400).send("Invalid  password");
+      return res.status(400).send("Invalid email or password");
     }
 
-    // 3. Generate JWT
+    const isMatch = await user.validatePassword(password);
+    if (!isMatch) {
+      return res.status(400).send("Invalid email or password");
+    }
+
     const token = user.getJWT();
 
-    // 4. Set token in cookie
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false, // change to true in production (https)
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.status(200).send("Login successful");
   } catch (error) {
-    console.error(error);
     res.status(500).send("Internal Server Error");
   }
 });
 
-// ---------------------- SIGNUP ----------------------
-authRouter.post("/signup", async (req, res) => {
-  try {
-    // Step 1: Validate input
-    validateSignUpData(req);
-
-    const { password } = req.body;
-    if (!password) {
-      return res.status(400).send("Password is required");
-    }
-
-    // Step 2: Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    req.body.password = hashedPassword;
-
-    // Step 3: Save user
-    const user = new User(req.body);
-    await user.save();
-
-    res.status(201).send("User registered successfully");
-  } catch (error) {
-    console.error(error);
-
-    // Duplicate email
-    if (error.code === 11000) {
-      return res.status(400).send("Email already registered");
-    }
-
-    return res.status(400).send(error.message);
-  }
-});
-// ---------------------- LOGOUT ----------------------
+/* ---------------- LOGOUT ---------------- */
 authRouter.post("/logout", (req, res) => {
-  res.cookie("token", null, {
-    expires: new Date(Date.now()),
+  res.cookie("token", "", {
     httpOnly: true,
+    expires: new Date(0),
   });
   res.send("Logged out successfully");
 });

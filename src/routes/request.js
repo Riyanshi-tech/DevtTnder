@@ -15,7 +15,7 @@ requestRouter.post(
 
       const allowedStatus = ["ignored", "interested"];
       if (!allowedStatus.includes(status)) {
-        return res.status(400).send("Invalid status value");
+        return res.status(400).send("Invalid status value"); 
       }
 
       const toUser = await User.findById(toUserId);

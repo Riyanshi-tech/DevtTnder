@@ -5,13 +5,27 @@ const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
-    firstName: { type: String, required: true, minlength: 4, maxlength: 20 },
-    lastName: { type: String, required: true, minlength: 4, maxlength: 20 },
+    firstName: {
+      type: String,
+      required: true,
+      minlength: 2,
+      maxlength: 20,
+      trim: true,
+    },
+
+    lastName: {
+      type: String,
+      required: true,
+      minlength: 2,
+      maxlength: 20,
+      trim: true,
+    },
 
     emailId: {
       type: String,
       required: true,
       unique: true,
+      lowercase: true, // 🔥 important
       trim: true,
       validate(value) {
         if (!validator.isEmail(value)) {
@@ -24,34 +38,20 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
-      validate(value) {
-        if (!validator.isStrongPassword(value, { minSymbols: 0 })) {
-          throw new Error(
-            "Password must be strong (uppercase, lowercase, number)"
-          );
-        }
-        if (value.toLowerCase().includes("password")) {
-          throw new Error("Password cannot contain the word 'password'");
-        }
-      },
     },
 
     age: { type: Number, min: 18 },
 
     gender: {
       type: String,
-      validate(value) {
-        if (!["male", "female", "other"].includes(value.toLowerCase())) {
-          throw new Error("Invalid gender value");
-        }
-      },
+      enum: ["male", "female", "other"],
     },
 
     photoUrl: {
       type: String,
       validate(value) {
         if (value && !validator.isURL(value)) {
-          throw new Error("Invalid URL format for photoUrl");
+          throw new Error("Invalid photo URL");
         }
       },
     },
@@ -60,25 +60,22 @@ const userSchema = new mongoose.Schema(
 
     skills: {
       type: [String],
-      validate(val) {
-        if (!Array.isArray(val)) throw new Error("Skills must be an array");
-      },
+      default: [],
     },
   },
   { timestamps: true }
 );
 
-
-// 🔑 Generate JWT
+/* 🔑 Generate JWT */
 userSchema.methods.getJWT = function () {
-  return jwt.sign({ userId: this._id }, "Dev@Tinder$790", {
+  return jwt.sign({ userId: this._id }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
 };
 
-// 🔍 Validate password
-userSchema.methods.validatePassword = function (password) {
-  return bcrypt.compare(password, this.password);
+/* 🔍 Validate password */
+userSchema.methods.validatePassword = function (plainPassword) {
+  return bcrypt.compare(plainPassword, this.password);
 };
 
 module.exports = mongoose.model("User", userSchema);
